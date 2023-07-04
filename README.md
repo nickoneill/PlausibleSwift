@@ -6,13 +6,13 @@ An implementation of [Plausible Analytics pageview and event tracking](https://p
 
 Configure a site that is connected to Plausible, then track a pageview event:
 
-```
+```Swift
 let plausible = PlausibleSwift(domain: "example.site")
 plausible.trackPageview(path: "/")
 ```
 
 Or, track an arbitrary event:
 
-```
-trackEvent(event: "clicked-donate", path: "/donate")
+```Swift
+plausible.trackEvent(event: "clicked-donate", path: "/donate")
 ```
