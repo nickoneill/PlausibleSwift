@@ -22,35 +22,42 @@ public struct PlausibleSwift {
     /// Sends a pageview event to Plausible for the specified path
     /// - Parameters:
     ///     - path: a URL path to use as the pageview location (as if it was viewed on a website). There doesn't have to be anything served at this URL.
+    ///     - properties: (optional) a dictionary of key-value pairs that will be attached to this event
     /// Throws a `domainNotSet` error if it has been configured with an empty domain
-    public func trackPageview(path: String) throws {
+    public func trackPageview(path: String, properties: [String: String] = [:]) throws {
         guard self.domain != "" else {
             throw PlausibleError.domainNotSet
         }
         
-        plausibleRequest(name: "pageview", path: path)
+        plausibleRequest(name: "pageview", path: path, properties: properties)
     }
 
     /// Sends a named event to Plausible for the specified path
     /// - Parameters:
     ///     - event: an arbitrary event name for your analytics.
     ///     - path: a URL path to use as the pageview location (as if it was viewed on a website). There doesn't have to be anything served at this URL.
+    ///     - properties: (optional) a dictionary of key-value pairs that will be attached to this event
     /// Throws a `domainNotSet` error if it has been configured with an empty domain.
     /// Throws a `eventIsPageview` error if you try to specific the event name as `pageview` which may indicate that you're holding it wrong.
-    public func trackEvent(event: String, path: String) throws {
+    public func trackEvent(event: String, path: String, properties: [String: String] = [:]) throws {
         guard event != "pageview" else {
             throw PlausibleError.eventIsPageview
         }
         
-        plausibleRequest(name: event, path: path)
+        plausibleRequest(name: event, path: path, properties: properties)
     }
     
-    private func plausibleRequest(name: String, path: String) {
+    private func plausibleRequest(name: String, path: String, properties: [String: String]) {
         var req = URLRequest(url: PlausibleAPIEventURL)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        let jsonData = try? JSONSerialization.data(withJSONObject: ["name": name,"url": constructPageviewURL(path: path),"domain": domain])
+        var jsonObject: [String: Any] = ["name": name,"url": constructPageviewURL(path: path),"domain": domain]
+        if !properties.isEmpty {
+            jsonObject["props"] = properties
+        }
+        
+        let jsonData = try? JSONSerialization.data(withJSONObject: jsonObject)
         req.httpBody = jsonData
         
         URLSession.shared.dataTask(with: req) { data, response, err in
